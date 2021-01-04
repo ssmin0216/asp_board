@@ -1,0 +1,665 @@
+
+ASP 게시판만들기
+개인 PC에서 IIS 셋팅 및 MS-SQL Express 버전 설치
+ASP + MS-SQL 연동
+
+게시판 리스트, 글쓰기, 글 읽기, 글수정, 글삭제 기능 구현
+선결조건
+<PPT 형식>
+1)     개발일정 작성
+
+2)     WorkFlow 작성 
+
+3)     스토리보드 작성
+
+
+-----------------------------------------------------------------
+개발일정
+12.03
+
+오전
+1.IIS세팅(10:34) 및 MS-SQL Express버전 설치
+2.ASP + MS-SQL 연동
+점심시간
+오후
+DB테이블(BOARD) 생성 및 구축
+//이름, 아이디, 비밀번호, 제목, 내용,  작성시간
+-----------------------------------------------------------------
+<회원 테이블>
+이름  NAME VARCHAR(10)
+아이디 ID   VARCHAR(10) pk
+비번  PSWD VARCHAR(10)
+
+
+-----------------------------------------------------------------
+<게시판 테이블>
+시퀀스넘버 pk
+아이디
+제목
+내용
+작성시간
+조회수
+-----------------------------------------------------------------
+로그인하면
+반갑습니다 ㅁㅁ님
+글 목록은 
+제목 아이디 작성시간
+
+게시판에 글을 쓰면 보이는건
+제목 내용
+board.title /board.text
+데이터에 입력되는건
+insert into board values(user.id board.title /board.text /board.time)
+
+글을 수정 또는 삭제하려면
+user.id와 board.id가 같은경우 수정 또는 삭제 버튼
+update / delete where user.id==board.id
+-----------------------------------------------------------------
+시퀀스 생성
+-- Sequence 생성
+CREATE SEQUENCE person_seq 
+    START WITH 1
+    INCREMENT BY 1 
+   
+-- Sequence 사용
+INSERT Person (Id, Name) VALUES (NEXT VALUE FOR person_seq, 'XBOX')
+
+
+CREATE TABLE BOARD(
+       ID   VARCHAR2(10) 
+       TITL VARCHAR2(10)
+       TEXT VARCHAR2(20)
+       TIME DATE
+       VIEW INT
+
+     );
+
+INSERT INTO  BOARD VALUES('SSM', 'TITLE', 'TEST', NOW());
+
+-----------------------------------------------------------------
+게시판 생성
+board.html (게시판목록)
+board.asp  (게시판목록 실행파일)
+
+write.html (글쓰기 화면)
+write.asp  (글쓰기 실행파일)
+
+read.html  (글읽기 화면)
+read.asp   (글읽기 실행파일)
+
+update.html(글수정 화면)
+update.asp (글수정 실행파일)
+
+delete.asp (글삭제 실행파일)
+
+
+CREATE INDEX idx_board
+-----------------------------------------------------------------
+페이지 실행
+회원가입 / 로그인
+회원가입 
+ seq
+-이름
+-아이디 (중복확인)
+-비밀번호
+
+
+-----------------------------------------------------------------
+ID 영문 숫자만 입력가능
+var regType1 = /^[A-Za-z0-9+]*$/;
+if (regType1.test(document.getElementById('userid').value)) { alert('아이디가 조건에 맞지 않습니다'); }
+
+var check_num = /[0-9]/; // 숫자 
+var check_eng = /[a-zA-Z]/; // 문자 
+var check_spc = /[~!@#$%^&*()_+|<>?:{}]/; // 특수문자 
+var check_kor = /[ㄱ-ㅎ|ㅏ-ㅣ|가-힣]/; // 한글체크
+-----------------------------------------------------------------
+ID 중복체크
+https://simplesolace.tistory.com/entry/%EC%9E%90%EB%B0%94%EC%8A%A4%ED%81%AC%EB%A6%BD%ED%8A%B8%EC%98%88%EC%A0%9C-%EC%95%84%EC%9D%B4%EB%94%94-%EC%A4%91%EB%B3%B5%ED%99%95%EC%9D%B8-%EC%98%88%EC%A0%9C-%EB%AC%B8%EC%9E%90%EC%97%B4-%EB%B9%84%EA%B5%90
+
+-----------------------------------------------------------------
+수정/삭제 버튼 숨기기
+<input type="button" id="toggler" value="Toggler" onClick="action();" />
+<input type="button" id="togglee" value="Togglee" />
+
+<script>
+    var hidden = false;
+    function action() {
+        hidden = !hidden;
+        if(hidden) {
+            document.getElementById('togglee').style.visibility = 'hidden';
+        } else {
+            document.getElementById('togglee').style.visibility = 'visible';
+        }
+    }
+</script>
+https://codeday.me/ko/qa/20190517/568763.html
+-----------------------------------------------------------------
+
+12-09 ~ 12-13 추가 게시판
+v테이블 수정
+v소스 수정
+v댓글 테이블 생성
+12-10
+회원 
+    ◎- 레벨 추가(읽기 쓰기권한) 
+    ◎- 수정(memberUpdate.asp, mUpdate.asp) 
+    ◎- 탈퇴(mDelete.asp)
+----------------------------------------------------------------------------------------
+12-11
+관리자 (MASTER 추가 - 회원들의 레벨 설정 권한)- 
+    ◎-MEMBER테이블에 LEVEL컬럼추가
+    ◎- 회원 목록 페이지(memberList.asp)를 만들고 여기서 레벨 설정을 할 수 있도록함 - MASTER만 보이도록 (예시:IF LEVEL = MASTER THEN...)
+    ◎- level을 <select><option>태그를 이용하여 2(읽기가능) 또는 1(읽기쓰기가능)을 부여 (master는 0)
+
+    ◎- 확인을 누르면 LOOP돌면서 하나씩 UPDATE WHERE <%=rs(?)%>
+        12-10..이걸 어떻게 구현할래.............................
+	와씨 12-10~12-11(10:39)에 이걸 해냈다
+	Do Until 과 j(페이징때문에 No.값으로 ID를 메겼다)를 이용하여
+	level들을 lvl이라는 text에 hidden으로 모두 갖고있다가
+	onChange로 변경된 레벨ID의 value값을 lvl ID의 value로 같이 변경해주고
+	submit할때 Request로 모든 lvl의 value값을 Update후 i++해가면서 바꿔줬다.!!!
+	대신 수정완료는 페이지마다 눌러야한다.
+	 ->왜냐하면 다른 페이지의 lvl값은 null로 처리되기때문에 
+	  mUpdate.asp에서 if InputLevel<>""일 경우에만 UPDATE를 해줬기 때문이다.
+
+    ◎- MASTER는 모든 글 삭제 가능(board.asp 수정은 X)
+    ◎- level이 0 아닌사람은 memberList.asp에 강제적으로도 접근 못하게 하기
+         세션값이 없으면 안되는건 해놨는데
+	 만약 레벨이 1인 사람으로 로그인한 상태로 접근을 한다면
+	 memberList에서 level 0 인 id값과 session값이 "일치하지 않으면"
+	 login.asp로 redirect해야하는데...
+	 이것도 3시쯤 해결완료^_^
+     ◎- 레벨에 따라서 읽고 쓰기 권한 부여
+        그러면 boardList.asp에서 글쓰기 버튼으로 level 2 인 사람은 글쓰기가 안보이게 하고
+	                      강제로 boardWrite.asp로 접근하면 튕기게 하자
+	추가로 자신이 게시한 글이 아닌데 수정하려고 하는경우 boardUpdate.asp도 처리하자
+
+        select level from member where id=Session("id")
+	case 문으로 레벨을 나눠서 권한을 주자
+        level 0 : 관리자
+	level 1 : 읽기 쓰기
+	level 2 : 읽기
+	(어???? 그러면 board.asp 에서
+	strSess=master일때 삭제 버튼이 뜨게 하면 안되고 
+	level이 0인 경우에 권한을 줘야되는데..
+	-이 문제는 join문으로 처리함 ^_^)
+----------------------------------------------------------------------------------------
+12-12
+그러면 레벨이 2(MEMBER)인 사람은 댓글을 총 10개(COMMENT) 이상 달아야지 level 1로 업그레이드할 수 있도록 하자
+그러면 sql 문은 select count(*) from comment where bid=Session("id")
+
+SELECT M.ID
+FROM MEMBER M
+LEFT JOIN COMMENT C
+ ON M.ID = C.ID
+ WHERE M.LEVEL=2
+   AND C.ID = (SELECT DISTINCT(id)
+		 FROM COMMENT
+		WHERE ID='test'
+		  AND (
+			SELECT COUNT(ID)
+			  FROM COMMENT
+			 WHERE ID='test')>=10
+			)
+
+
+    if rs(0) >= 10 then
+      Update member set level = 1 WHERE ID=Session("id")
+
+
+◎게시글이 삭제되면 등록된 댓글도 모두 삭제
+◎본인 댓글만 삭제할수 있도록함
+◎댓글 등록창과 
+◎댓글 등록 구현 페이지 cInsert.asp를 만들어야함
+◎그러면 끝~~
+
+
+
+-----------------------------------------------------------------------
+12-13
+댓글기능 ◎- 제목옆에 댓글 갯수(ex>안녕하세요(3))(12-11)
+      - CONTENT테이블에 INSERT
+      - Session(id)와 CONTENT ID가 같은 경우  삭제(cDelete.asp) 가능
+
+◎댓글 리스트 - board.asp
+◎댓글 등록페이지 - cInsert.asp 등록되면 alert로 댓글이 등록되었습니다. 
+댓글 삭제(level 0이거나 본인이거나) - cDelete.asp
+◎게시글이 삭제되면 모든 댓글 삭제(bid값)
+
+
+
++++ 
+v vcnt default 값 0으로 구글 찾아보고
+v member테이블에도 mid만들고
+v board테이블에 bid
+v 둘다 identity increase 1 해주기
+v (속성에 ID사양에서 ID를 예로 변경 - 참고 Google:ssms identity)
+
+12-13 
+댓글페이지 reply.asp를 따로 만들고 10개마다 페이징 처리하기
+
+-----------댓글기능------------------------------------------------------
+댓글기능을 만들려고한다.
+BoardList.asp의 제목(title)에 댓글의 갯수
+댓글기능은 
+우선 새로운 댓글 테이블이 필요하겠지
+테이블명 : comment
+
+어떤 테이블의 댓글인가???????????????????????????????????
+구분값을 하나 더 만들어야겠는데...
+테이블의  BID값과 댓글의 BID값이 같은거를 출력해야하는데
+INSERT문에서 BID에 BID값을 넣어주고
+INSERT INTO COMMENT(
+      BID
+     ,ID
+     ,CONTENT
+     ,RDATE
+)VALUES(
+     <%=bid%>
+    ,<%=id%>
+    ,<%=content%>
+    ,GETDATE()
+)
+
+
+SELECT * 
+FROM COMMENT
+WHERE BOARD.BID=COMMENT.BID
+
+CREATE TABLE COMMENT(
+      CID     INT IDENTITY(1,1) PRIMARY KEY
+     ,BID     INT               NOT NULL
+     ,ID      VARCHAR(20)       NOT NULL
+     ,CONTENT VARCHAR(100)      NOT NULL
+     ,RDATE   SMALLDATETIME     NOT NULL
+)
+
+
+
+
+
+
+--------------------------------------------------------------------------------
+◎이전글 / 다음글 (board.asp)
+현재 글의 seq (글 번호) 를 기준으로하여, 이전글의 번호는 seq 보다 작은 것 중에 가장 큰 값을, 다음글의 번호는 seq 보다 큰 것중에 가장 작은 값을 가져온다.
+
+
+String preSeq = "";
+
+String afterSeq = "";
+
+
+
+// 이전글
+  sql = select max(seq) from album where seq < ?";
+  pstmt = conn.prepareStatement(sql);
+  pstmt.setString(1, seq);
+ 
+  rs = pstmt.executeQuery();
+  
+  if(rs.next()) {
+   preSeq = rs.getString("seq");
+  }
+  
+  // 다음글
+  sql = "select seq, title from album where seq=(select min(seq) from album where seq > ?)";
+  pstmt = conn.prepareStatement(sql);
+  pstmt.setString(1, seq);
+ 
+  rs = pstmt.executeQuery();
+  
+  if(rs.next()) {
+   afterSeq = rs.getString("seq");
+  }
+[출처] JSP 기초11(게시판에서 이전글, 다음글 번호 가져오는 SQL query)|작성자 yunyoejin
+
+
+
+-----------------------------------------------------------------------------
+◎맨 위에 뜨는 공지사항
+DB BOARD테이블에 컬럼 GUBN VARCHAR(1) default 'N' 추가
+LEVEL 0인경우 board.asp에서 체크할수 있도록 수정
+boardList.asp에서 공지사항 먼저 출력하도록 수정
+
+board테이블에 공지사항 gubn 컬럼을 추가해야함
+공지사항이면 level이 0일때 글쓰기(boardWrite.asp)에서 체크박스나 라디오버튼이나 셀렉트로
+공지사항을 선택하면 DB에 구분값을 비교해서
+If gubn=1 then
+loop 
+	공지사항 글
+else 
+loop
+	일반 글
+
+
+공지사항은 board테이블에서 구분값을 주는거고
+대댓글은  comment테이블에서 구분값을 주는거 아녀??
+
+그럼 공지사항은 gubn N과 Y값으로 Y이면 공지사항, N이면 일반글 WHERE절로 분류해서 LOOP문을 돌리고
+ALTER TABLE BOARD ADD GUBN VARCHAR(1) NOT NULL DEFAULT 'N'
+
+
+
+-------------------------------------
+◎댓글 좋아요 수 ->좋아요만 할것인가?? 싫어요는 할껴?말껴? -> 일단 좋아요만 구현하자...
+COMMENT테이블에 GOOD라는 좋아요 컬럼을 추가하고
+onclick하면 cnt=cnt+1
+근데 계속 누르면 안되지... 한 아이디가 한번누르면 +1 또한번 누르면 좋아요가 취소되게 -1 해야될듯
+
+그럼 어떡해... 좋아요 테이블을 따로 만들어야돼?
+아 그러면 좋아요 구분값을 넣어서
+
+COMMENT테이블에서 BID에 ID의 
+어떤 댓글에(CID) 누가(ID) 좋아요를(GUBN 0/1) 눌렀는가?
+
+안된다.
+GOOD 테이블 새로 만들어야될듯
+CREATE TABLE GOOD(
+GID INT IDENTITY(1,1) PRIMARY KEY
+,BID INT NOT NULL
+,CID INT NOT NULL
+,ID  VARCHAR(20) NOT NULL
+,GUBN VARCHAR(1) DEFAULT='N'
+)
+
+reply.asp 에서 내용 옆에 
+span으로 SELECT count(GID) FROM GOOD GROUP BY CID 좋아요 갯수 띄우고 옆에 ♡ 만들고
+gubn='n'이면 ♡  onclick하면 alert('좋아요를 눌렀습니다.')
+INSERT INTO GOOD (CID, ID, GUBN) VALUES ('', '', 'Y')
+     'Y'이면 ♥  onclick하면 alert('좋아요가 취소되었습니다.')
+ DELETE GOOD WHERE CID='', ID=''
+
+comment에 좋아요 컬럼을 만들까.. 말까
+
+댓글이 삭제되면 그에 해당한 좋아요도 다 지우고
+게시글이 삭제되도 삭제
+회원이 탈퇴하면 그사람이 누른 좋아요수는??...
+
+
+
+그니까 rs가 이미 다 출력되고나서 내가 좋아요를 누르는 거니까 댓글이 출력되기 전에 눌러야 그 cid값을 갖는거지..;;
+그러면 내가 선택한 cid값은 어떻게 알까?
+내가 누른 거의 cid값을.....
+하 ... 좋아요의 id값에 rs(0)을 넣어서 javascript함수에 gy(id)이렇게 id값을 가져가게 해서 
+       id.substring으로 cid값만 뽑아서 값을 넘겨줬다.
+
+
+
+
+
+아 GOOD 테이블에 걍 BID도 추가하자!!!
+
+---------------------------------
+대댓글(reply.asp에서 해야되는데...)
+
+부모와 자식값을 줘야되는데..
+
+CID값을 같게 하고 구분으로 0은 부모 1은 자식 하면 누구의 대댓글인지 알수 있자나!
+근데 그 대댓글을 어떻게 출력할래...
+그냥 WHERE CID=cid GUBN=1 ORDER BY RDATE?
+
+
+총 추가된 기능
+공지사항
+이전글/다음글
+댓글 좋아요♡♥
+
+
+
+sp 스토어드 프로시저 exec
+
+-------------------------------------------------------------------------------------
+3주차
+12-19~12-26
+   explore에서 무한루프 뜬다.;;; 호환성 문제
+   1.계층형 게시판(게시판, 댓글 둘다)
+   	->https://coneseo.tistory.com/30 참고(무제한 대댓글)
+
+   2.프로시저를 이용하여 DB호출 
+	->http://asperados.byus.net/home/board/tt/tag/%C0%FA%C0%E5%C7%C1%B7%CE%BD%C3%C0%FA 참고
+	https://l2j.co.kr/169
+--------------------------
+12-18
+계층형 게시판
+board DB에다가
+ALTER TABLE BOARD ADD BGNO    INT 
+ALTER TABLE BOARD ADD BGORD   INT 
+ALTER TABLE BOARD ADD BGDEPTH INT 
+
+현재 boardList.asp
+sql="SELECT BID, TITLE, ID, RDATE, VCNT, GUBN FROM BOARD ORDER BY GUBN DESC, BID DESC"
+
+계층형 게시판 boardList.asp
+sql="SELECT BID, TITLE, ID, RDATE, VCNT, GUBN FROM BOARD ORDER BY GUBN DESC, GORD "
+
+
+예시)
+CREATE TABLE TEST(
+ TID INT IDENTITY(1,1) PRIMARY KEY
+,ID VARCHAR(10) NOT NULL
+,NAME VARCHAR(10) NOT NULL
+,GNO INT NOT NULL
+,GORD INT NOT NULL
+,GDEPTH INT NOT NULL
+)
+
+INSERT INTO TEST (ID, NAME, GNO,GORD, GDEPTH) VALUES ('B','TEST',2, 0, 1)
+SELECT * FROM TEST ORDER BY GNO DESC, GORD
+
+INSERT INTO TEST (ID, NAME, GNO,GORD, GDEPTH) VALUES ('B2','TEST2',2, 1, 2)
+SELECT * FROM TEST ORDER BY GNO DESC, GORD
+
+UPDATE TEST SET GORD=GORD+1 WHERE GORD>0
+SELECT * FROM TEST ORDER BY GNO DESC,  GORD
+
+INSERT INTO TEST (ID, NAME, GNO,GORD, GDEPTH) VALUES ('BB','TESTB',2, 1, 2)
+SELECT * FROM TEST ORDER BY GNO DESC,  GORD
+
+UPDATE TEST SET GORD=GORD+1 WHERE GORD>2
+SELECT * FROM TEST ORDER BY GNO DESC,  GORD
+
+
+INSERT INTO TEST (ID, NAME, GNO,GORD, GDEPTH) VALUES ('B22','TEST22',2, 3, 3)
+SELECT * FROM TEST ORDER BY GNO DESC,  GORD
+
+UPDATE TEST SET GORD=GORD+1 WHERE GORD>1
+SELECT * FROM TEST ORDER BY GNO DESC,  GORD
+
+INSERT INTO TEST (ID, NAME, GNO,GORD, GDEPTH) VALUES ('BB2','TESTB2',2, 2, 3)
+SELECT * FROM TEST ORDER BY GNO DESC,  GORD
+
+=>
+B
+-BB
+  --BB2
+-B2
+  --B22
+ A
+-AA
+  --AA2
+-A2
+  --A22
+
+ 
+수정할 부분
+글쓰기(write.asp)
+- INSERT INTO BOARD (ID, TITLE, CONTENT, BGNO, BGORD, BGDEPTH) VALUES ('"&strId&"','"&strTitle&"','"&strContent&"', (SELECT MAX(BGNO) FROM BOARD)+1, 0, 1)
+
++board.asp에 답글달기버튼 추가후 submit (boardReply.asp)
+ 답글달기(boardReply.asp)
+- BGNO.Request("")
+  BGORD
+  BGDEPTH
+값받아와야함
+
+depth수만큼 &nbsp;를 넣을수 있나??
+그러면 for문이나 until돌려야되는데...
+SELECT COUNT(<%=BGDEPTH%>)
+FROM BOARD
+WHERE BID
+-> 
+dim nbsp
+for i=1 To 10 Step 1
+ nbsp = nbsp+"&nbsp;&nbsp;"
+ Response.write "nbsp : a"&nbsp&"a<br>"
+
+next
+
+
+
+- UPDATE BOARD SET BGORD=BGORD+1 WHERE BGORD><%=BGORD%>
+- INSERT INTO BOARD (ID, TITLE, CONTENT, BGNO, BGORD, BGDEPTH) VALUES ('"&strId&"', '"&nbsp&"└RE."&strTitle&"','"&strContent&"', <%=BGNO%>, <%=BGORD%>+1, <%=BGDEPT%>+1)
+ └RE. 이거를 insert를 할것인가 아니면 그냥 출력만 할것인가.
+      insert하기에는 title이 varchar(50)이고...
+      그러면 └RE.는 insert하고 boardList.asp에서만 따로 공백을 넣어주자.
+
+
+잠깐 joinCheck.asp 수정함
+execute메소드는 데이터를 돌려주지 않는 명령(INSERT, UPDATE, DELETE) 또는 스토어드 프로시저 수행 시 사용한다.
+cnn.Execute sql
+자!!!!
+------
+board 테이블 수정 완료
+write.asp에서 bgno, bgord, bgdepth 입력 완료
+글쓰기 잘 작동됨!!!!!
+------
+이제 board.asp에서 답글달기 버튼 생성 및 action=boardReply.asp로 해줘야함.
+boardList.asp에서부터 request.queryString으로 bgno,bgord,bgdepth값을 보내주고
+board.asp에서도 보내주고
+boardReply.asp에서 값을 받는다.
+
+우선 글쓰기가 가능한 레벨인 사람만 답글달기가 보이는거 완성
+boardList.asp -> board.asp로 값 가져감 완성
+board.asp -> boardReply.asp 완성
+boardReply.asp -> bReply.asp 완성
+
+***그러고 보니 board.asp에서 이전글 다음글도 수정해줘야되네??
+    MIN(BID)가 아니고 이제 
+    BGNO가 있으면 다음 MAX(BGORD)
+    BGNO가 없으면 다음 MAX(BGNO)
+계층형 게시판 완성했네..
+이제 이전글 다음글만 해결하면 끝..........이 아니네..
+
+If rs(0)<>"" Then 일경우에만 INPUT '//이전글 다음글이 있는 경우
+이전글은 같은 BGNO값이 있으면 SELECT MAX(BGORD) FROM BOARD WHERE BGORD<"&BGORD
+                  없으면 SELECT MIN(BGNO) FROM BOARD WHERE BGNO<"&BGNO&" AND BGORD=0
+		  q
+
+다음글은 같은 BGNO값이 있으면 SELECT MIN(BGORD) FROM BOARD WHERE BGORD>"&BGORD
+		  없으면 SELECT MIN(BGNO) FROM BOARD WHERE BGNO>"&BGNO&" AND BGORD=0 
+		       '//BGNO가 끝나면 무조건 다음 그룹이기때문에 BGORD가 0이 없을수가 없음
+		  다음글이없다면
+
+삭제는 답글도 모두 삭제됩니다. 정말로 삭제하시겠습니까?
+글을 삭제하면 자식은 모두 삭제하고 
+삭제는 삭제할 글의 BGNO와 같고, BGORD보다 크고, BGDEPTH와 같은 번호가rs() 나오기 전까지!!!!!!!!!! 삭제하면 됨
+삭제하면 BGORD를 줄여주기위해
+삭제된 rs의 개수를 세고 삭제한 bgord 보다 큰 값들 중에서 -rs의 갯수를 하면 됨
+
+------
+그냥 공지사항은 답글 달지 못하게하자!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+board.asp 에서 gubn="Y"이면 답글 달기 없애기
+If rs(0)<>"" Then 일경우에만 INPUT '//이전글 다음글이 있는 경우
+
+이전글은 같은 BGNO값이 있으면 SELECT MAX(BGORD) FROM BOARD WHERE BGORD<"&BGORD
+                       없으면 SELECT MIN(BGNO) FROM BOARD WHERE BGNO<"&BGNO&" AND BGORD=0
+		  
+
+다음글은 같은 BGNO값이 있으면 SELECT MIN(BGORD) FROM BOARD WHERE BGORD>"&BGORD
+
+		       없으면 SELECT MIN(BGNO) FROM BOARD WHERE BGNO>"&BGNO&" AND BGORD=0 
+		       '//BGNO가 끝나면 무조건 다음 그룹이기때문에 BGORD가 0이 없을수가 없음 
+
+
+
+
+
+SELECT * FROM BOARD WHERE BGNO="&BGNO '//이전글 같은 BGNO값이 있냐? 없냐?
+IF RS(0)<>"" THEN		있으면
+
+
+
+
+
+	sql="select BID, GUBN, BGNO, BGORD, BGDEPTH from board where bgord=(SELECT max(bgord) FROM BOARD WHERE bgno="&iBgno&" and BGORD<"&iBgord&" )" '//같은 그룹에 이전값이 있냐없냐?
+	if rs(0)<>"" '//있으면
+	<input type="button" value="이전글" onclick="location.href='board.asp?bid=<%=rs(0)%>&page=<%=strPage%>&gubn=<rs(1)%>&bgno=<%=rs(2)%>&bgord=<%=rs(3)%>&bgdepth=<%=rs(4)%>'"> 
+	ELSE     '//없으면 이전그룹에 최고값을 찾아야지
+	sql="SELECT BID, GUBN, BGNO, BGORD, BGDEPTH FROM BOARD WHERE BGNO= "
+
+	sql="SELECT MAX(BGORD) FROM BOARD WHERE BGORD<"&BGORD
+	MAX(BGNO)<"&BGNO 
+
+
+<input type="button" value="이전글" onclick="location.href='board.asp?bid=<%=rs(0)%>&page=<%=strPage%>&gubn=<%=strGubn%>&bgno=<%=iBgno%>&bgord=<%=iBgord%>&bgdepth=<%=iBgdepth%>'">
+ELSE				'//이전글 같은 BGNO값이 없으면
+	IF '//더이상 값이 없으
+	sql="SELECT MIN(BGNO) FROM BOARD WHERE BGNO<"&BGNO&" AND BGORD=0"
+
+
+이전글은 같은 BGNO값이 있으면 SELECT MAX(BGORD) FROM BOARD WHERE BGORD<"&BGORD
+                       없으면 SELECT MIN(BGNO) FROM BOARD WHERE BGNO<"&BGNO&" AND BGORD=0
+
+
+다음글은 같은 BGNO값이 있으면 SELECT MIN(BGORD) FROM BOARD WHERE BGORD>"&BGORD
+
+		       없으면 SELECT MIN(BGNO) FROM BOARD WHERE BGNO>"&BGNO&" AND BGORD=0 
+
+--------------------------------------------------------------------------
+12-20
+이제 뭘하면 되냐면
+
+◎◎◎◎◎◎(12-20 5:23)1. 이전글 / 다음글 
+◎◎◎◎◎◎2. 페이징 처리 오류
+12-20일 다함
+---------
+◎◎◎◎◎◎(12-20 14:32)3. 삭제 시 자식글들도 같이 삭제
+4. 댓글에도 계층형
+5. 댓글 삭제도 자식들 삭제
+6. 회원 탈퇴시 댓글 삭제(게시글, 답글, 댓글, 대댓글도 같이 다 삭제) 
+    - id값이 같은 글의 bid, bgord, bgdepth를 찾아서 delete.asp에 있는대로 자식들 삭제
+여기까지 오늘 다해야함
+---------
+7. DB프로시저
+------
+
+1.이전글 / 다음글
+그러면 공지사항이랑 일반 글이랑 따로 이전/다음글을 만들까?
+그러면 GUBN='Y'일때 SQL
+     GUBN='N'일때 SQL 하면 되는데..
+     ㅇㅋ 이걸로ㄱㄱ
+
+
+exit
+http://kangjaeg.com/bbs/board.php?board=studyasp&page=2&command=body&no=16
+
+ do loop while 
+https://webclub.tistory.com/166
+
+계층형 게시판
+1.db bgno, bgord, bgdepth 추가
+2.계층형으로 보이기 : boardList.asp(select)
+3.board.asp에서 답글달기 버튼 추가 후 submit으로 boardWrite.asp로 보내기
+4.답글달기 : board.asp -> boardReply.asp -> bReply.asp(기능)
+5.삭제 : delete.asp
+
+계층형 댓글
+◎1.db cgno, cgord, cgdepth 추가
+2.계층형으로 보이기 : reply.asp
+3 답글달기 : 답글달기 버튼을 누르면 입력창(hidden), 등록버튼이 visible로 보이고 등록을 누르면 submit
+	  reply.asp -> cReply.asp(기능 만들어야됨) -cInsert.asp(기능)참조
+4.삭제 : cDelete.asp
+
+
+------------------
+계층형 댓글
+ALTER TABLE COMMENT ADD CGNO    INT 
+ALTER TABLE COMMENT ADD CGORD   INT 
+ALTER TABLE COMMENT ADD CGDEPTH INT 
+
+
+
+
+대댓글 안됨~~~~~
+strComment값이 안넘어옴
